@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Jan's Mega Museumapp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg: #202b25;
+    --bg-alt: #283b31;
+    --panel: #2c3d33;
+    --card: #faf3e3;
+    --card-line: #e4d8bc;
+    --gold: #c9a227;
+    --gold-soft: #e6c65c;
+    --ink: #241f14;
+    --cream: #f5efdd;
+    --cream-dim: #cfc6ab;
+    --rope: #8a2e2e;
+    --rope-dim: #a85252;
+    --green-on: #3f7a4f;
+    --radius: 16px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(ellipse at top, #2a3a30 0%, var(--bg) 60%);
+    color:var(--cream);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding-bottom:90px;
+  }
+  header{
+    padding:26px 20px 20px;
+    text-align:center;
+    border-bottom:2px solid var(--gold);
+    background:linear-gradient(180deg, rgba(0,0,0,0.15), transparent);
+  }
+  header h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(24px,7vw,34px);
+    margin:0;
+    letter-spacing:0.5px;
+  }
+  .container{ max-width:640px; margin:0 auto; padding:18px 14px 0; }
+  .toolbar{ display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .search-wrap{ margin-bottom:14px; }
+  .search-wrap input{
+    width:100%; padding:14px 16px; border-radius:14px; border:1.5px solid var(--gold);
+    background:var(--panel); color:var(--cream); font-size:15px; font-family:'Inter',sans-serif;
+  }
+  .search-wrap input::placeholder{ color:var(--cream-dim); }
+  .btn{
+    border:none; border-radius:14px; padding:16px 18px; font-family:'Inter',sans-serif;
+    font-weight:600; font-size:15px; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; gap:8px; -webkit-tap-highlight-color:transparent;
+    transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-gold{background:linear-gradient(180deg,var(--gold-soft),var(--gold));color:#241f14;box-shadow:var(--shadow);flex:1;}
+  .btn-outline{background:transparent;border:2px solid var(--gold);color:var(--gold-soft);}
+  .btn-outline.active{background:var(--gold);color:var(--ink);}
+  .btn-rope{background:linear-gradient(180deg,var(--rope-dim),var(--rope));color:#fff;}
+  .btn-ghost{background:var(--panel);color:var(--cream);}
+  .btn-sm{padding:10px 14px;font-size:13px;border-radius:10px;}
+  .btn-block{width:100%;}
+
+  .empty{ text-align:center; padding:50px 20px; color:var(--cream-dim); }
+  .empty .frame{ font-size:40px; margin-bottom:10px; }
+
+  .grid{ display:flex; flex-direction:column; gap:12px; }
+  .visit-card{
+    background:var(--card); color:var(--ink); border-radius:var(--radius); padding:16px;
+    box-shadow:var(--shadow); border:1px solid var(--card-line); position:relative;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .visit-card .card-click{ flex:1; min-width:0; cursor:pointer; }
+  .visit-card .check{
+    width:26px;height:26px;border-radius:50%; border:2px solid var(--gold); flex-shrink:0;margin-top:2px;
+    display:none; align-items:center;justify-content:center; font-size:14px;color:var(--gold); background:#fff; cursor:pointer;
+  }
+  .share-mode .visit-card .check{display:flex;}
+  .visit-card .check.checked{background:var(--gold);color:#fff;}
+  .visit-card h3{ font-family:'Fraunces',serif; margin:0 0 4px; font-size:19px; }
+  .thumbs{display:flex;gap:2px;margin-bottom:6px;}
+  .thumb{font-size:16px;filter:grayscale(1) opacity(0.3);}
+  .thumb.on{filter:none;}
+  .vc-meta{font-size:12.5px;color:#6b6250;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .vc-emotion{font-size:20px;}
+  .vc-text{font-size:14px;line-height:1.4;color:#4a442f;font-style:italic;margin-top:2px;}
+  .vc-reach{font-size:12.5px;line-height:1.4;color:#7a7256;margin-top:6px;}
+  .jaarkaart-badge{
+    display:inline-block;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;margin-bottom:6px;
+  }
+  .jaarkaart-badge.on{background:var(--green-on);color:#fff;}
+  .jaarkaart-badge.off{background:#c9c2a6;color:#5a5240;}
+  .comp-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .comp-chip{
+    display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--card-line);
+    border-radius:999px;padding:5px 6px 5px 10px;font-size:12.5px;font-weight:500;
+  }
+  .comp-x{
+    width:16px;height:16px;border-radius:50%;background:var(--rope);color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;flex-shrink:0;
+  }
+  .comp-add{
+    background:var(--gold-soft);border:1.5px solid var(--gold);border-radius:999px;padding:5px 12px;
+    font-size:12.5px;font-weight:700;cursor:pointer;color:var(--ink);
+  }
+
+  .overlay{
+    position:fixed;inset:0;background:rgba(10,14,11,0.72); display:none;align-items:flex-end;justify-content:center;z-index:50;
+    backdrop-filter: blur(2px);
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--card);color:var(--ink); width:100%;max-width:640px; max-height:92vh;overflow-y:auto;
+    border-radius:22px 22px 0 0; padding:20px 18px 100px; box-shadow:0 -10px 30px rgba(0,0,0,0.5);
+  }
+  .sheet h2{ font-family:'Fraunces',serif; font-size:24px;margin:0 0 16px; }
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;font-weight:600;font-size:13px; text-transform:uppercase;letter-spacing:0.5px;
+    color:#5a5240;margin-bottom:8px;
+  }
+  .field .hint{font-weight:400;text-transform:none;letter-spacing:0;color:#8a8265;font-size:12px;}
+  input[type=text], textarea, select{
+    width:100%; padding:14px; border-radius:12px; border:1.5px solid var(--card-line);
+    background:#fff; font-family:'Inter',sans-serif; font-size:15px; color:var(--ink); resize:vertical;
+  }
+  textarea{min-height:70px;}
+  .rate-row{display:flex;gap:6px;}
+  .rate-btn{
+    flex:1;padding:12px 0;border-radius:10px;border:1.5px solid var(--card-line); background:#fff;font-size:22px;cursor:pointer;
+  }
+  .rate-btn.on{background:var(--gold-soft);border-color:var(--gold);}
+  .chip-wrap{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{ padding:10px 14px;border-radius:999px;border:1.5px solid var(--card-line); background:#fff;font-size:14px;cursor:pointer;font-weight:500; }
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .chip.emo{font-size:20px;padding:8px 12px;}
+  .add-comp{display:flex;gap:8px;margin-top:8px;}
+  .add-comp input{flex:1;padding:10px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .close-x{
+    position:absolute;top:14px;right:14px;background:var(--panel);color:var(--cream);
+    border:none;border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;
+  }
+  .actions-row{display:flex;gap:10px;margin-top:22px;}
+
+  .toggle-row{display:flex;align-items:center;gap:12px;}
+  .toggle{
+    position:relative;width:52px;height:30px;border-radius:999px;background:#c9c2a6;cursor:pointer;flex-shrink:0;transition:background .15s ease;
+  }
+  .toggle.on{background:var(--green-on);}
+  .toggle .knob{
+    position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);
+    transition:transform .15s ease;
+  }
+  .toggle.on .knob{transform:translateX(22px);}
+  .toggle-label{font-size:14px;font-weight:600;}
+
+  .fab-bar{
+    position:fixed;bottom:0;left:0;right:0; background:linear-gradient(180deg, transparent, var(--bg) 30%);
+    padding:14px 14px 18px; display:flex;gap:10px; max-width:640px;margin:0 auto;
+    left:50%;transform:translateX(-50%); width:100%;
+  }
+
+  .autocomplete-wrap{position:relative;}
+  .ac-list{
+    position:absolute;top:100%;left:0;right:0;background:#fff; border:1.5px solid var(--card-line);border-radius:12px;margin-top:4px;
+    max-height:200px;overflow-y:auto;z-index:5;box-shadow:var(--shadow);
+  }
+  .ac-item{padding:12px 14px;cursor:pointer;font-size:15px;border-bottom:1px solid #f0ead6;}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item:active{background:var(--gold-soft);}
+
+  .export-target{ position:fixed;left:-9999px;top:0;width:520px; }
+  .export-card{
+    background:var(--card);color:var(--ink);padding:26px;border-radius:20px;
+    font-family:'Inter',sans-serif;border:3px solid var(--gold);
+  }
+  .export-card h3{font-family:'Fraunces',serif;font-size:26px;margin:0 0 4px;}
+  .export-card .ex-line{font-size:14px;margin:6px 0;color:#4a442f;}
+  .export-card .ex-thumbs{font-size:22px;margin:8px 0;}
+  .footer-note{ text-align:center;font-size:11px;color:var(--cream-dim); padding:20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Jan's Mega Museumapp</h1>
+</header>
+
+<div class="container">
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="🔍 Zoek op museum of tekst...">
+  </div>
+  <div class="toolbar">
+    <button class="btn btn-outline" id="shareToggleBtn">📤 Beoordeling delen</button>
+  </div>
+  <div id="shareBar" style="display:none;margin-bottom:14px;">
+    <button class="btn btn-rope btn-block" id="doShareBtn">📤 Deel geselecteerde (0)</button>
+  </div>
+
+  <div id="listWrap"></div>
+</div>
+
+<div class="fab-bar">
+  <button class="btn btn-gold btn-block" id="newVisitBtn">👍 Nieuw museumbezoek</button>
+</div>
+
+<!-- Visit form overlay -->
+<div class="overlay" id="formOverlay">
+  <div class="sheet">
+    <button class="close-x" id="closeForm">✕</button>
+    <h2 id="formTitle">Nieuw bezoek</h2>
+
+    <div class="field autocomplete-wrap">
+      <label>Museum</label>
+      <input type="text" id="fMuseum" placeholder="Typ of kies een museum..." autocomplete="off">
+      <div class="ac-list" id="acList" style="display:none;"></div>
+    </div>
+
+    <div class="field">
+      <label>Waardering <span class="hint">(aantal duimpjes)</span></label>
+      <div class="rate-row" id="fRating"></div>
+    </div>
+
+    <div class="field">
+      <label>Wat vond je ervan?</label>
+      <textarea id="fText" placeholder="Vrije indrukken van het bezoek..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Emotie van het bezoek</label>
+      <div class="chip-wrap" id="fEmotion"></div>
+    </div>
+
+    <div class="field">
+      <label>Met wie was ik</label>
+      <div class="chip-wrap" id="fCompanions"></div>
+      <div class="add-comp">
+        <input type="text" id="newCompInput" placeholder="Nieuwe naam toevoegen...">
+        <button class="btn btn-gold btn-sm" id="addCompBtn" type="button">Toevoegen</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Het museumcafé</label>
+      <textarea id="fCafe" placeholder="Koffie, gebak, sfeer..."></textarea>
+    </div>
+
+    <div class="field">
+      <label>Bereikbaarheid</label>
+      <div style="margin-bottom:10px;">
+        <label style="text-transform:none;font-weight:500;font-size:13px;">Ik ben er heen gegaan met</label>
+        <select id="fMode">
+          <option value="">Kies vervoersmiddel...</option>
+          <option>Openbaar vervoer</option>
+          <option>Auto</option>
+          <option>Fiets</option>
+          <option>Te voet</option>
+        </select>
+      </div>
+      <div id="qualityWrap" style="display:none;margin-bottom:10px;">
+        <label style="text-transform:none;font-weight:500;font-size:13px;" id="qualityLabel">Hoe was dat?</label>
+        <select id="fQuality"></select>
+      </div>
+      <div id="parkingWrap" style="display:none;">
+        <div class="two-col">
+          <select id="fParkDist">
+            <option value="">Parkeren afstand...</option>
+            <option>Dichtbij</option>
+            <option>Niet dichtbij</option>
+          </select>
+          <select id="fParkPrice">
+            <option value="">Prijs parkeren...</option>
+            <option>Goedkoop</option>
+            <option>Duur</option>
+          </select>
+        </div>
+      </div>
+      <div id="reachSummary" style="margin-top:10px;font-size:14px;font-style:italic;color:#5a5240;"></div>
+    </div>
+
+    <div class="field">
+      <label>Diversiteit van de collectie <span class="hint">(1 = alleen schilderijen, 5 = heel divers)</span></label>
+      <div class="rate-row" id="fDiversity"></div>
+    </div>
+
+    <div class="field">
+      <label>Museumjaarkaart</label>
+      <div class="toggle-row">
+        <div class="toggle" id="fJaarkaart"><div class="knob"></div></div>
+        <span class="toggle-label" id="jaarkaartLabel">Museumjaarkaart is hier NIET geldig</span>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-rope" id="deleteVisitBtn" style="display:none;">Verwijderen</button>
+      <button class="btn btn-gold btn-block" id="saveVisitBtn">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer-note">Alle gegevens blijven bewaard in deze app, ook na herladen.</div>
+
+<div class="export-target" id="exportTarget"></div>
+
+<script>
+const DEFAULT_MUSEUMS = [
+  "Rijksmuseum Amsterdam",
+  "Rijksmuseum van Oudheden, Leiden",
+  "Van Gogh Museum, Amsterdam",
+  "Stedelijk Museum, Amsterdam",
+  "Mauritshuis, Den Haag",
+  "Kröller-Müller Museum, Otterlo",
+  "Anne Frank Huis, Amsterdam",
+  "Naturalis Biodiversity Center, Leiden",
+  "Museum Boijmans Van Beuningen, Rotterdam",
+  "Groninger Museum, Groningen",
+  "Escher in Het Paleis, Den Haag",
+  "Teylers Museum, Haarlem",
+  "Het Scheepvaartmuseum, Amsterdam",
+  "Nemo Science Museum, Amsterdam",
+  "Kunstmuseum Den Haag, Den Haag",
+  "Frans Hals Museum, Haarlem",
+  "Valkhof museum, Nijmegen"
+];
+const DEFAULT_COMPANIONS = ["De Witte"];
+const EMOTIONS = [
+  {e:"😊",l:"Blij"},{e:"😲",l:"Onder de indruk"},{e:"🥹",l:"Ontroerd"},
+  {e:"🤔",l:"Nadenkend"},{e:"😍",l:"Geïnspireerd"},{e:"😴",l:"Verveeld"}
+];
+
+let state = { museums: [...DEFAULT_MUSEUMS], companions: [...DEFAULT_COMPANIONS], visits: [] };
+let editingId = null;
+let currentRating = 0, currentDiversity = 0, currentEmotion = null, currentCompanions = [], currentJaarkaart = false;
+let shareMode = false;
+let selectedForShare = new Set();
+let searchQuery = '';
+
+async function loadState(){
+  let loaded = false;
+  try{
+    if(window.storage && window.storage.get){
+      const v = await window.storage.get('museums-data');
+      if(v && v.value){ state = Object.assign(state, JSON.parse(v.value)); loaded = true; }
+    }
+  }catch(e){ /* window.storage niet beschikbaar (bijv. lokaal geopend bestand) */ }
+  if(!loaded){
+    try{
+      const raw = localStorage.getItem('museums-data');
+      if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+    }catch(e){ /* localStorage niet beschikbaar */ }
+  }
+  render();
+}
+async function saveState(){
+  const json = JSON.stringify(state);
+  try{
+    if(window.storage && window.storage.set){ await window.storage.set('museums-data', json); }
+  }catch(e){ /* val stil terug op localStorage hieronder */ }
+  try{ localStorage.setItem('museums-data', json); }
+  catch(e){ console.error('Opslaan mislukt', e); }
+}
+
+function uid(){ return 'v'+Date.now()+Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function render(){
+  const wrap = document.getElementById('listWrap');
+  let visits = [...state.visits];
+  if(searchQuery){
+    const q = searchQuery.toLowerCase();
+    visits = visits.filter(v =>
+      v.museum.toLowerCase().includes(q) ||
+      (v.text||'').toLowerCase().includes(q) ||
+      (v.companions||[]).some(c=>c.toLowerCase().includes(q))
+    );
+  }
+  if(visits.length===0){
+    wrap.innerHTML = state.visits.length===0
+      ? `<div class="empty"><div class="frame">🖼️</div>Nog geen bezoeken beoordeeld.<br>Druk hieronder op "Nieuw museumbezoek".</div>`
+      : `<div class="empty"><div class="frame">🔍</div>Niets gevonden voor je zoekopdracht.</div>`;
+    return;
+  }
+  const sorted = visits.sort((a,b)=>b.createdAt-a.createdAt);
+  wrap.innerHTML = `<div class="grid">${sorted.map(v=>visitCardHtml(v)).join('')}</div>`;
+
+  document.querySelectorAll('.card-click').forEach(el=>{
+    el.addEventListener('click', ()=> openForm(el.closest('.visit-card').dataset.id));
+  });
+  document.querySelectorAll('.visit-card .check').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = el.closest('.visit-card').dataset.id;
+      if(selectedForShare.has(id)) selectedForShare.delete(id); else selectedForShare.add(id);
+      render(); updateShareBar();
+    });
+  });
+  document.querySelectorAll('.comp-x').forEach(el=>{
+    el.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = el.closest('.visit-card').dataset.id;
+      const name = el.dataset.name;
+      const v = state.visits.find(x=>x.id===id);
+      v.companions = (v.companions||[]).filter(n=>n!==name);
+      await saveState(); render();
+    });
+  });
+  document.querySelectorAll('.comp-add').forEach(el=>{
+    el.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const id = el.closest('.visit-card').dataset.id;
+      const name = prompt('Naam van deze persoon:');
+      if(!name || !name.trim()) return;
+      const trimmed = name.trim();
+      const v = state.visits.find(x=>x.id===id);
+      v.companions = v.companions || [];
+      if(!v.companions.includes(trimmed)) v.companions.push(trimmed);
+      if(!state.companions.includes(trimmed)) state.companions.push(trimmed);
+      await saveState(); render();
+    });
+  });
+}
+
+function visitCardHtml(v){
+  const thumbs = [1,2,3,4,5].map(n=>`<span class="thumb ${n<=v.rating?'on':''}">👍</span>`).join('');
+  const checked = selectedForShare.has(v.id) ? 'checked' : '';
+  const compChips = (v.companions||[]).map(name=>`
+    <span class="comp-chip">${escapeHtml(name)}<span class="comp-x" data-name="${escapeHtml(name)}">✕</span></span>
+  `).join('');
+  return `<div class="visit-card" data-id="${v.id}">
+    <div class="check ${checked}">${selectedForShare.has(v.id)?'✓':''}</div>
+    <div class="card-click">
+      <h3>${escapeHtml(v.museum)}</h3>
+      <div class="thumbs">${thumbs}</div>
+      <span class="jaarkaart-badge ${v.jaarkaart?'on':'off'}">${v.jaarkaart?'Museumjaarkaart is hier geldig':'Museumjaarkaart is hier NIET geldig'}</span>
+      <div class="vc-meta">
+        ${v.emotion?`<span class="vc-emotion">${v.emotion}</span>`:''}
+      </div>
+      ${v.text?`<div class="vc-text">${escapeHtml(v.text)}</div>`:''}
+      ${v.reach?`<div class="vc-reach">${escapeHtml(buildReachSummary(v.reach.mode, v.reach.quality, v.reach.parkDist, v.reach.parkPrice))}</div>`:''}
+    </div>
+  </div>
+  <div class="comp-chips" style="margin:-4px 0 0 0;padding:0 16px 14px;">${compChips}<span class="comp-add">+ persoon</span></div>`;
+}
+
+document.getElementById('searchInput').addEventListener('input', (e)=>{
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+/* ---------- Form ---------- */
+function buildRatingRow(containerId, icon){
+  const el = document.getElementById(containerId);
+  el.innerHTML = [1,2,3,4,5].map(n=>`<button type="button" class="rate-btn" data-n="${n}">${icon}</button>`).join('');
+  el.querySelectorAll('.rate-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const n = parseInt(btn.dataset.n);
+      if(containerId==='fRating') currentRating = (currentRating===n)?0:n;
+      else currentDiversity = (currentDiversity===n)?0:n;
+      refreshRatingUI();
+    });
+  });
+}
+function refreshRatingUI(){
+  document.querySelectorAll('#fRating .rate-btn').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.n)<=currentRating));
+  document.querySelectorAll('#fDiversity .rate-btn').forEach(b=>b.classList.toggle('on', parseInt(b.dataset.n)<=currentDiversity));
+}
+
+function buildEmotionChips(){
+  const el = document.getElementById('fEmotion');
+  el.innerHTML = EMOTIONS.map(x=>`<button type="button" class="chip emo" data-e="${x.e}" title="${x.l}">${x.e}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      currentEmotion = (currentEmotion===c.dataset.e)?null:c.dataset.e;
+      refreshEmotionUI();
+    });
+  });
+}
+function refreshEmotionUI(){
+  document.querySelectorAll('#fEmotion .chip').forEach(c=>c.classList.toggle('on', c.dataset.e===currentEmotion));
+}
+
+function buildCompanionChips(){
+  const el = document.getElementById('fCompanions');
+  el.innerHTML = state.companions.map(name=>`<button type="button" class="chip" data-name="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      const n = c.dataset.name;
+      if(currentCompanions.includes(n)) currentCompanions = currentCompanions.filter(x=>x!==n);
+      else currentCompanions.push(n);
+      refreshCompanionUI();
+    });
+  });
+}
+function refreshCompanionUI(){
+  document.querySelectorAll('#fCompanions .chip').forEach(c=>c.classList.toggle('on', currentCompanions.includes(c.dataset.name)));
+}
+document.getElementById('addCompBtn').addEventListener('click', ()=>{
+  const input = document.getElementById('newCompInput');
+  const name = input.value.trim();
+  if(!name) return;
+  if(!state.companions.includes(name)) state.companions.push(name);
+  if(!currentCompanions.includes(name)) currentCompanions.push(name);
+  input.value='';
+  buildCompanionChips(); refreshCompanionUI();
+});
+
+function setupAutocomplete(){
+  const input = document.getElementById('fMuseum');
+  const list = document.getElementById('acList');
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    if(!q){ list.style.display='none'; return; }
+    const matches = state.museums.filter(m=>m.toLowerCase().includes(q)).slice(0,8);
+    if(matches.length===0){ list.style.display='none'; return; }
+    list.innerHTML = matches.map(m=>`<div class="ac-item">${escapeHtml(m)}</div>`).join('');
+    list.style.display='block';
+    list.querySelectorAll('.ac-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        input.value = item.textContent;
+        list.style.display='none';
+      });
+    });
+  });
+  document.addEventListener('click', (e)=>{
+    if(!e.target.closest('.autocomplete-wrap')) list.style.display='none';
+  });
+}
+
+const QUALITY_OPTIONS = {
+  'Auto': ['Goed te bereiken', 'Lastig te bereiken (files/drukte)'],
+  'Openbaar vervoer': ['Goed te bereiken', 'Kort stukje lopen vanaf het station', 'Nog een eind lopen vanaf het station'],
+  'Fiets': ['Goed te bereiken', 'Kort stukje lopen bij aankomst', 'Nog een eind lopen bij aankomst'],
+  'Te voet': ['Goed te bereiken', 'Kort stukje lopen', 'Nog een eind lopen']
+};
+
+function onModeChange(){
+  const mode = document.getElementById('fMode').value;
+  const qWrap = document.getElementById('qualityWrap');
+  const pWrap = document.getElementById('parkingWrap');
+  const qSel = document.getElementById('fQuality');
+  if(!mode){
+    qWrap.style.display='none'; pWrap.style.display='none';
+    updateReachSummary(); return;
+  }
+  qWrap.style.display='block';
+  qSel.innerHTML = '<option value="">Kies...</option>' + QUALITY_OPTIONS[mode].map(o=>`<option>${o}</option>`).join('');
+  pWrap.style.display = mode==='Auto' ? 'block' : 'none';
+  updateReachSummary();
+}
+
+function updateReachSummary(){
+  const mode = document.getElementById('fMode').value;
+  const quality = document.getElementById('fQuality').value;
+  const parkDist = document.getElementById('fParkDist').value;
+  const parkPrice = document.getElementById('fParkPrice').value;
+  document.getElementById('reachSummary').textContent = buildReachSummary(mode, quality, parkDist, parkPrice);
+}
+
+function buildReachSummary(mode, quality, parkDist, parkPrice){
+  if(!mode || !quality) return '';
+  const modeText = {'Openbaar vervoer':'het openbaar vervoer','Auto':'de auto','Fiets':'de fiets','Te voet':'te voet'}[mode];
+  if(mode==='Auto'){
+    let base = quality==='Goed te bereiken'
+      ? `Dit museum is goed te bereiken met ${modeText}`
+      : `Dit museum is lastig te bereiken met ${modeText}`;
+    if(parkDist && parkPrice){
+      let parkText;
+      if(parkDist==='Dichtbij' && parkPrice==='Goedkoop') parkText = 'je kunt dichtbij goedkoop parkeren.';
+      else if(parkDist==='Dichtbij' && parkPrice==='Duur') parkText = 'je kunt dichtbij parkeren, maar het is duur.';
+      else if(parkDist==='Niet dichtbij' && parkPrice==='Goedkoop') parkText = 'je kunt niet dichtbij parkeren, maar het is wel goedkoop.';
+      else parkText = 'je kunt niet dichtbij parkeren, en het is ook nog duur.';
+      return `${base}; ${parkText}`;
+    }
+    return base + '.';
+  }
+  if(quality==='Goed te bereiken'){
+    return `Dit museum is goed te bereiken met ${modeText}.`;
+  }
+  if(quality.startsWith('Kort stukje lopen')){
+    return mode==='Openbaar vervoer'
+      ? `Dit museum is goed te bereiken met ${modeText}, en ligt een kort stukje lopen van het station.`
+      : `Dit museum is goed te bereiken met ${modeText}, met nog een kort stukje lopen.`;
+  }
+  return mode==='Openbaar vervoer'
+    ? `Dit museum is te bereiken met ${modeText}, maar het is nog wel een eind lopen vanaf het station.`
+    : `Dit museum is te bereiken met ${modeText}, maar het is nog wel een eind lopen.`;
+}
+
+document.getElementById('fMode').addEventListener('change', onModeChange);
+document.getElementById('fQuality').addEventListener('change', updateReachSummary);
+document.getElementById('fParkDist').addEventListener('change', updateReachSummary);
+document.getElementById('fParkPrice').addEventListener('change', updateReachSummary);
+
+document.getElementById('fJaarkaart').addEventListener('click', ()=>{
+  currentJaarkaart = !currentJaarkaart;
+  refreshJaarkaartUI();
+});
+function refreshJaarkaartUI(){
+  const toggle = document.getElementById('fJaarkaart');
+  toggle.classList.toggle('on', currentJaarkaart);
+  document.getElementById('jaarkaartLabel').textContent = currentJaarkaart
+    ? 'Museumjaarkaart is hier geldig'
+    : 'Museumjaarkaart is hier NIET geldig';
+}
+
+function openForm(id){
+  editingId = id;
+  const v = id ? state.visits.find(x=>x.id===id) : null;
+  document.getElementById('formTitle').textContent = v ? 'Bezoek bewerken' : 'Nieuw bezoek';
+  document.getElementById('deleteVisitBtn').style.display = v ? 'flex' : 'none';
+  document.getElementById('fMuseum').value = v ? v.museum : '';
+  document.getElementById('fText').value = v ? v.text : '';
+  document.getElementById('fCafe').value = v ? v.cafe : '';
+  document.getElementById('fMode').value = v && v.reach ? (v.reach.mode||'') : '';
+  onModeChange();
+  document.getElementById('fQuality').value = v && v.reach ? (v.reach.quality||'') : '';
+  document.getElementById('fParkDist').value = v && v.reach ? (v.reach.parkDist||'') : '';
+  document.getElementById('fParkPrice').value = v && v.reach ? (v.reach.parkPrice||'') : '';
+  updateReachSummary();
+  currentRating = v ? v.rating : 0;
+  currentDiversity = v ? v.diversity : 0;
+  currentEmotion = v ? v.emotion : null;
+  currentCompanions = v ? [...(v.companions||[])] : [];
+  currentJaarkaart = v ? !!v.jaarkaart : false;
+
+  buildRatingRow('fRating','👍');
+  buildRatingRow('fDiversity','🎨');
+  refreshRatingUI();
+  buildEmotionChips(); refreshEmotionUI();
+  buildCompanionChips(); refreshCompanionUI();
+  refreshJaarkaartUI();
+
+  document.getElementById('formOverlay').classList.add('open');
+}
+function closeFormFn(){
+  document.getElementById('formOverlay').classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('newVisitBtn').addEventListener('click', ()=>openForm(null));
+document.getElementById('closeForm').addEventListener('click', closeFormFn);
+
+document.getElementById('saveVisitBtn').addEventListener('click', async ()=>{
+  const museumName = document.getElementById('fMuseum').value.trim();
+  if(!museumName){ alert('Geef het museum een naam.'); return; }
+  if(!state.museums.some(m=>m.toLowerCase()===museumName.toLowerCase())){
+    state.museums.push(museumName);
+  }
+  const data = {
+    id: editingId || uid(),
+    museum: museumName,
+    rating: currentRating,
+    text: document.getElementById('fText').value.trim(),
+    emotion: currentEmotion,
+    companions: [...currentCompanions],
+    cafe: document.getElementById('fCafe').value.trim(),
+    reach: {
+      mode: document.getElementById('fMode').value,
+      quality: document.getElementById('fQuality').value,
+      parkDist: document.getElementById('fParkDist').value,
+      parkPrice: document.getElementById('fParkPrice').value
+    },
+    diversity: currentDiversity,
+    jaarkaart: currentJaarkaart,
+    createdAt: editingId ? (state.visits.find(x=>x.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+  if(editingId){
+    const idx = state.visits.findIndex(x=>x.id===editingId);
+    state.visits[idx] = data;
+  } else {
+    state.visits.push(data);
+  }
+  await saveState();
+  closeFormFn();
+  render();
+});
+
+document.getElementById('deleteVisitBtn').addEventListener('click', async ()=>{
+  if(!editingId) return;
+  if(!confirm('Dit bezoek verwijderen?')) return;
+  state.visits = state.visits.filter(x=>x.id!==editingId);
+  await saveState();
+  closeFormFn();
+  render();
+});
+
+/* ---------- Share mode & export ---------- */
+document.getElementById('shareToggleBtn').addEventListener('click', (e)=>{
+  shareMode = !shareMode;
+  selectedForShare.clear();
+  document.body.classList.toggle('share-mode', shareMode);
+  e.currentTarget.classList.toggle('active', shareMode);
+  document.getElementById('shareBar').style.display = shareMode ? 'block' : 'none';
+  updateShareBar();
+  render();
+});
+function updateShareBar(){
+  document.getElementById('doShareBtn').textContent = `📤 Deel geselecteerde (${selectedForShare.size})`;
+}
+
+document.getElementById('doShareBtn').addEventListener('click', async ()=>{
+  if(selectedForShare.size===0){ alert('Selecteer eerst een of meer bezoeken.'); return; }
+  const chosen = state.visits.filter(v=>selectedForShare.has(v.id));
+  const files = [];
+  const target = document.getElementById('exportTarget');
+  for(const v of chosen){
+    target.innerHTML = exportCardHtml(v);
+    const cardEl = target.querySelector('.export-card');
+    const canvas = await html2canvas(cardEl, {scale:2, backgroundColor:'#faf3e3'});
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+    files.push(new File([blob], `${v.museum.replace(/[^a-z0-9]/gi,'_')}.png`, {type:'image/png'}));
+  }
+  target.innerHTML = '';
+
+  if(navigator.canShare && navigator.canShare({files})){
+    try{
+      await navigator.share({files, title:"Jan's Mega Museumapp", text:'Museumbeoordeling(en)'});
+      return;
+    }catch(err){ /* gebruiker annuleerde, val terug op download */ }
+  }
+  files.forEach(f=>{
+    const url = URL.createObjectURL(f);
+    const a = document.createElement('a');
+    a.href = url; a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+  });
+  alert('Delen via app niet beschikbaar op dit toestel — afbeelding(en) zijn gedownload, deel ze handmatig via WhatsApp.');
+});
+
+function exportCardHtml(v){
+  const thumbs = [1,2,3,4,5].map(n=>n<=v.rating?'👍':'▫️').join('');
+  const palette = [1,2,3,4,5].map(n=>n<=v.diversity?'🎨':'▫️').join('');
+  return `<div class="export-card">
+    <h3>${escapeHtml(v.museum)}</h3>
+    <div class="ex-thumbs">${thumbs} ${v.emotion||''}</div>
+    <div class="ex-line">${v.jaarkaart?'Museumjaarkaart is hier geldig':'Museumjaarkaart is hier NIET geldig'}</div>
+    ${v.text?`<div class="ex-line">"${escapeHtml(v.text)}"</div>`:''}
+    ${v.companions&&v.companions.length?`<div class="ex-line">👥 Met: ${escapeHtml(v.companions.join(', '))}</div>`:''}
+    ${v.cafe?`<div class="ex-line">☕ Café: ${escapeHtml(v.cafe)}</div>`:''}
+    ${v.reach&&v.reach.mode?`<div class="ex-line">🚉 ${escapeHtml(buildReachSummary(v.reach.mode, v.reach.quality, v.reach.parkDist, v.reach.parkPrice))}</div>`:''}
+    <div class="ex-line">Diversiteit van de collectie: ${palette}</div>
+  </div>`;
+}
+
+setupAutocomplete();
+loadState();
+</script>
+</body>
+</html>
